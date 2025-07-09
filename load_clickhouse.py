@@ -6,17 +6,18 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 import dateutil
+import streamlit as st
 
 def load_clickhouse(customer_id):
     # Load environment variables
     load_dotenv()
 
     # Setup ClickHouse connection parameters
-    CLICKHOUSE_HOST: str = os.getenv('CLICKHOUSE_HOST', 'localhost')
-    CLICKHOUSE_PORT: str = os.getenv('CLICKHOUSE_PORT', '8443')
-    CLICKHOUSE_DB: str = os.getenv('CLICKHOUSE_DB', 'bep')
-    CLICKHOUSE_USER: str = os.getenv('CLICKHOUSE_USER', '<USER>')
-    CLICKHOUSE_PASSWORD: str = os.getenv('CLICKHOUSE_PASSWORD', '<PASSWORD>')
+    CLICKHOUSE_HOST: str = st.secrets["CLICKHOUSE_HOST"]
+    CLICKHOUSE_PORT: str = st.secrets["CLICKHOUSE_PORT"]
+    CLICKHOUSE_DB: str = st.secrets["CLICKHOUSE_DB"]
+    CLICKHOUSE_USER: str = st.secrets["CLICKHOUSE_USER"]
+    CLICKHOUSE_PASSWORD: str = st.secrets["CLICKHOUSE_PASSWORD"]
 
     # Establish connection with ClickHouse
     client = clickhouse_connect.get_client(

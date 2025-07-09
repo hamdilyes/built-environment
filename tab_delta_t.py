@@ -70,6 +70,9 @@ def plot_forecasted_cumulative_delta_t(df, threshold):
     # get forecasted data
     cumulative_actual, cumulative_forecast, combined_series, forecast_index = get_forecasted_cumulative_delta_t(df)
 
+    if not (cumulative_actual or cumulative_forecast or combined_series or forecast_index):
+        return
+
     # Adjust forecast to start from the last actual value
     if cumulative_forecast is not None and not cumulative_actual.empty:
         last_actual_ts = cumulative_actual.index[-1]
