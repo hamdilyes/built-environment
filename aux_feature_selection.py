@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 
 def select_columns(df: pd.DataFrame, search_terms: list[str]) -> list[str]:
     numeric_df = df.select_dtypes(include='number')

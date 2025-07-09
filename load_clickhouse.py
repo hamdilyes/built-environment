@@ -1,7 +1,5 @@
-import os
 import logging
 import clickhouse_connect
-from dotenv import load_dotenv
 import pandas as pd
 import numpy as np
 from datetime import datetime
@@ -9,9 +7,6 @@ import dateutil
 import streamlit as st
 
 def load_clickhouse(customer_id):
-    # Load environment variables
-    load_dotenv()
-
     # Setup ClickHouse connection parameters
     CLICKHOUSE_HOST: str = st.secrets["CLICKHOUSE_HOST"]
     CLICKHOUSE_PORT: str = st.secrets["CLICKHOUSE_PORT"]
