@@ -26,7 +26,7 @@ def get_forecasted_cumulative_delta_t(df: pd.DataFrame):
     delta_t_df = get_delta_t(df)
 
     if delta_t_df.empty:
-        return None, None, None, None, "No Delta T data available to plot."
+        return None, None, None, None
 
     # Resample to daily mean
     daily_df = delta_t_df.resample('D').mean()
@@ -38,7 +38,7 @@ def get_forecasted_cumulative_delta_t(df: pd.DataFrame):
     daily_df = daily_df[(daily_df.index.month == current_month) & (daily_df.index.year == current_year)]
 
     if daily_df.empty:
-        return None, None, None, None, "No Delta T data available for the current month."
+        return None, None, None, None
 
     # Combine all columns by summing if multiple exist
     if len(daily_df.columns) > 1:
@@ -59,7 +59,7 @@ def get_forecasted_cumulative_delta_t(df: pd.DataFrame):
 
     # If no future dates left
     if forecast_days <= 0:
-        return daily_series, None, None, None, None
+        return daily_series, None, None, None
 
     # Perform forecast
     forecast_df = mstl(df_forecast, season_length=[7], steps=forecast_days)
