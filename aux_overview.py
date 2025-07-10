@@ -48,20 +48,25 @@ def get_category_features(df: pd.DataFrame) -> dict[str, list[str]]:
     categories = columns_categories(df)
     selections = {}
 
-    st.markdown("## Feature Selection Setup")
+    with st.expander("All Features", expanded=False):
+        nb_cols = 4
+        cols = st.columns(nb_cols)  # Adjust the number of columns as needed
+        for i, col_name in enumerate(all_numeric_columns):
+            cols[i % nb_cols].markdown(f"- **{col_name}**")
 
-    for category in categories:
-        # Default selection using the keyword-based selector
-        default_selection = select_columns(df, categories[category])
-        
-        selected = st.multiselect(
-            label=f"{category}",
-            options=all_numeric_columns,
-            default=default_selection,
-            key=f"select_{category}"
-        )
-        if selected:
-            selections[category] = selected
+    with st.expander("Feature Mapping", expanded=False):
+        for category in categories:
+            # Default selection using the keyword-based selector
+            default_selection = select_columns(df, categories[category])
+            
+            selected = st.multiselect(
+                label=f"{category}",
+                options=all_numeric_columns,
+                default=default_selection,
+                key=f"select_{category}"
+            )
+            if selected:
+                selections[category] = selected
 
     # Store in session state
     st.session_state["selections"] = selections

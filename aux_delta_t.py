@@ -1,83 +1,163 @@
 import pandas as pd
 import streamlit as st
-from statsforecast import StatsForecast
-from statsforecast.models import MSTL
+import plotly.graph_objects as go
+from datetime import datetime
 
+from aux_aux_delta_t import get_forecasted_cumulative_delta_t
 from aux_hvac import get_delta_t
 
 
-def mstl(df, season_length=[7], steps=7):
-    """
-    df with columns 'ds' and 'y' -> needed
-    """
-    df = df.copy()
-    df["unique_id"] = 1
+def plot_delta_t(df):
+    # Check
+    delta_t_df = get_delta_t(df)
+    if delta_t_df.empty:
+        st.warning("No 'Delta T' data available.")
+        return
 
-    sf = StatsForecast(models=[MSTL(season_length=season_length)], freq='D')
-    sf = sf.fit(df=df)
-    forecast = sf.forecast(df=df, h=steps)
-
-    forecast = forecast[['ds', 'MSTL']]
-        
-    return forecast
+    delta_t_overview(df)
+    plot_forecasted_cumulative_delta_t(df, 2.5)
 
 
-def get_forecasted_cumulative_delta_t(df: pd.DataFrame):
+def delta_t_overview(df: pd.DataFrame):
     delta_t_df = get_delta_t(df)
 
-    if delta_t_df.empty:
-        return None, None, None, None
-
-    # Resample to daily mean
-    daily_df = delta_t_df.resample('D').mean()
-
-    # Filter for current month and year
-    last_date = daily_df.index.max()
-    current_month = last_date.month
-    current_year = last_date.year
-    daily_df = daily_df[(daily_df.index.month == current_month) & (daily_df.index.year == current_year)]
-
-    if daily_df.empty:
-        return None, None, None, None
-
-    # Combine all columns by summing if multiple exist
-    if len(daily_df.columns) > 1:
-        daily_df["Delta T"] = daily_df.sum(axis=1)
-        daily_series = daily_df["Delta T"]
+    # Get the latest available timestamp and sum values if multiple columns
+    latest_ts = delta_t_df.index.max()
+    latest_values = delta_t_df.loc[latest_ts]
+    if isinstance(latest_values, pd.Series):
+        live_delta_t = latest_values.sum()
     else:
-        daily_series = daily_df.iloc[:, 0]
+        live_delta_t = float(latest_values)
 
-    # Forecasting preparation
-    df_forecast = pd.DataFrame({
-        "ds": daily_series.index,
-        "y": daily_series.values
-    })
+    # Get current month and previous month averages
+    latest_date = pd.to_datetime(latest_ts)
+    current_month = latest_date.month
+    current_year = latest_date.year
 
-    # Calculate forecast horizon
-    last_day = pd.Timestamp(current_year, current_month, 1).days_in_month
-    forecast_days = last_day - daily_series.index[-1].day
+    # Filter for current month
+    current_month_df = delta_t_df[
+        (delta_t_df.index.month == current_month) & (delta_t_df.index.year == current_year)
+    ]
+    current_month_avg = current_month_df.sum(axis=1).mean() if not current_month_df.empty else None
 
-    # If no future dates left
-    if forecast_days <= 0:
-        return daily_series, None, None, None
+    # Filter for previous month, handle year boundary
+    prev_month = current_month - 1 if current_month > 1 else 12
+    prev_year = current_year if current_month > 1 else current_year - 1
+    prev_month_df = delta_t_df[
+        (delta_t_df.index.month == prev_month) & (delta_t_df.index.year == prev_year)
+    ]
+    prev_month_avg = prev_month_df.sum(axis=1).mean() if not prev_month_df.empty else None
 
-    # Perform forecast
-    forecast_df = mstl(df_forecast, season_length=[7], steps=forecast_days)
-    forecast_df = forecast_df.rename(columns={"MSTL": "Delta T"})
-    forecast_df['ds'] = pd.to_datetime(forecast_df['ds'])
-    forecast_index = pd.DatetimeIndex(forecast_df['ds'])
+    # ---- Forecast ----
+    cumulative_actual, cumulative_forecast, combined_series, forecast_index = get_forecasted_cumulative_delta_t(df)
+    forecasted_avg = combined_series.mean()
 
-    # Combine
-    combined_series = pd.concat([
-        daily_series,
-        pd.Series(forecast_df['Delta T'].values, index=forecast_index)
-    ])
+    # Display metrics side by side
+    col1, col2, col3, col4, col5 = st.columns(5)
 
-    # Compute cumulative means
-    cumulative_actual = daily_series.expanding().mean()
-    cumulative_forecast = pd.Series(
-        combined_series.loc[forecast_index].expanding().mean().values,
-        index=forecast_index
+    if prev_month_avg is not None:
+        col1.metric(label="Previous Month ∆T", value=f"{prev_month_avg:.2f} °C")
+
+    if current_month_avg is not None:
+        pct = (current_month_avg/prev_month_avg - 1)*100
+        col2.metric("Month-to-Date ∆T", f"{current_month_avg:.2f} °C", f"{pct:.1f}%")
+
+    if live_delta_t:
+        col3.metric(label="Live ∆T", value=f"{live_delta_t:.2f} °C")
+    
+    if forecasted_avg is not None:
+        pct = (forecasted_avg/prev_month_avg - 1)*100
+        col4.metric("Forecasted ∆T", f"{forecasted_avg:.2f} °C", f"{pct:.1f}%")
+
+    explore_btn = col5.button("Low ∆T Root Causes", key="button_root_causes")
+    if explore_btn:
+        st.session_state.root_causes = True
+        st.rerun()
+
+
+def plot_forecasted_cumulative_delta_t(df, threshold):  
+    # get forecasted data
+    cumulative_actual, cumulative_forecast, combined_series, forecast_index = get_forecasted_cumulative_delta_t(df)
+    
+    if any(v is None for v in (cumulative_actual, cumulative_forecast, combined_series, forecast_index)):
+        return
+
+    # Adjust forecast to start from the last actual value
+    if cumulative_forecast is not None and not cumulative_actual.empty:
+        last_actual_ts = cumulative_actual.index[-1]
+        last_actual_val = cumulative_actual.iloc[-1]
+
+        # Create a new index and values for forecast starting from last actual point
+        forecast_index = forecast_index.insert(0, last_actual_ts)
+        cumulative_forecast = pd.concat([
+            pd.Series([last_actual_val], index=[last_actual_ts]),
+            cumulative_forecast
+        ])
+        
+        # Update combined series index for threshold line alignment
+        combined_series = pd.concat([
+            cumulative_actual,
+            cumulative_forecast[1:]  # exclude the duplicate timestamp
+        ])
+
+    fig = go.Figure()
+
+    # Plot actual
+    fig.add_trace(go.Scatter(
+        x=cumulative_actual.index,
+        y=cumulative_actual,
+        mode='lines',
+        name="Cumulative Avg Delta T (Actual)",
+    ))
+
+    # Plot forecast if available
+    if cumulative_forecast is not None:
+        fig.add_trace(go.Scatter(
+            x=cumulative_forecast.index,
+            y=cumulative_forecast,
+            mode='lines',
+            name="Cumulative Avg Delta T (Forecast)",
+            line=dict(color='#636EFA', dash='dash')
+        ))
+
+        # Vertical line for forecast start
+        start_forecast_dt = forecast_index[0].to_pydatetime()
+        fig.add_vline(
+            x=start_forecast_dt,
+            line=dict(color='gray', dash='dot'),
+        )
+        fig.add_annotation(
+            x=start_forecast_dt,
+            y=1,
+            yref='paper',
+            text="Forecast",
+            showarrow=False,
+            xanchor='left',
+            font=dict(color='white'),
+            bgcolor=None,
+            bordercolor='gray',
+            borderwidth=0,
+            borderpad=4,
+        )
+
+    # Threshold line
+    if threshold:
+        fig.add_trace(go.Scatter(
+            x=combined_series.index,
+            y=[threshold] * len(combined_series),
+            mode='lines',
+            name='Threshold',
+            line=dict(color='red', dash='dash')
+        ))
+
+    fig.update_layout(
+        title="Month-to-Date Daily Average ∆T",
+        xaxis_title="Date",
+        yaxis_title="∆T (°C)",
+        hovermode="x unified",
+        template="plotly_white",
+        showlegend=False,
     )
+    fig.update_yaxes(showgrid=False)
 
-    return cumulative_actual, cumulative_forecast, combined_series, forecast_index
+    st.plotly_chart(fig, use_container_width=True)
