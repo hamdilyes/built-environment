@@ -149,13 +149,11 @@ def process_single_csv(uploaded_file) -> Tuple[pd.DataFrame, str]:
         timestamp_col = detect_timestamp_column(df)
         if timestamp_col is None:
             st.error(f"❌ No timestamp column detected in {uploaded_file.name}")
-            st.info("Available columns: " + ", ".join(df.columns.tolist()))
             raise ValueError(f"No timestamp column found in {uploaded_file.name}")
         processed_df = parse_timestamp_column(df, timestamp_col)
         processed_df['source_file'] = uploaded_file.name
         return processed_df, uploaded_file.name
     except Exception as e:
-        st.error(f"❌ Error processing {uploaded_file.name}: {str(e)}")
         raise e
 
 def detect_granularity(index: pd.DatetimeIndex) -> Optional[pd.Timedelta]:
@@ -197,18 +195,15 @@ def combine_dataframes(dfs: List[pd.DataFrame]) -> pd.DataFrame:
             combined_df = combined_df.groupby(combined_df.index).agg(agg_dict)
         return combined_df
     except Exception as e:
-        st.error(f"❌ Error combining DataFrames: {str(e)}")
         raise e
 
 def validate_combined_data(df: pd.DataFrame) -> bool:
     if df.empty:
-        st.error("❌ Combined dataset is empty")
         return False
     if not isinstance(df.index, pd.DatetimeIndex):
-        st.error("❌ Index is not a datetime index")
         return False
     if len(df.select_dtypes(include=[np.number]).columns) == 0:
-        st.warning("⚠️ No numerical columns found for plotting")
+        return False
     return True
 
 def process_uploaded_csvs(uploaded_files, column_naming_method: str = 'suffix') -> pd.DataFrame:
@@ -223,7 +218,6 @@ def process_uploaded_csvs(uploaded_files, column_naming_method: str = 'suffix') 
                 processed_dfs.append(df)
                 filenames.append(filename)
         except Exception as e:
-            st.error(f"Skipping {uploaded_file.name} due to processing error: {str(e)}")
             continue
     if len(processed_dfs) > 1:
         if not check_granularity_consistency(processed_dfs, filenames):
@@ -246,7 +240,6 @@ def preview_column_conflicts(uploaded_files) -> Dict[str, List[str]]:
                     column_file_map[col] = []
                 column_file_map[col].append(uploaded_file.name)
         except Exception as e:
-            st.warning(f"Could not preview {uploaded_file.name}: {str(e)}")
             continue
     conflicts = {col: files for col, files in column_file_map.items() if len(files) > 1}
     return conflicts

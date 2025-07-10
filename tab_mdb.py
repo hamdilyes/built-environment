@@ -2,32 +2,35 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from tab_hasan_aux import get_consumption
+from aux_mdb import get_consumption
 
 
-def plot_hasan(df):
-    # MDB
-    plot_wholeelec(df)
-    plot_contribution(df)
-    plot_profiles(df)
-    plot_monthheat(df)
-    plot_loadduration(df)
+def tab_mdb(df):
+    df_consumption = get_consumption(df)
+    if df_consumption.empty:
+        st.warning("No 'Consumption' data available.")
+        return
+    
+    plot_wholeelec(df_consumption)
+    plot_contribution(df_consumption)
+    plot_profiles(df_consumption)
+    plot_monthheat(df_consumption)
+    plot_loadduration(df_consumption)
 
 
-def plot_wholeelec(df):
+def plot_wholeelec(df_consumption):
     """
     Display a stacked bar chart of electricity consumption using MOB/MDB-level data.
     Assumes df is a time-indexed DataFrame and get_consumption(df) returns only kWh columns.
     """
-    df_consumption = get_consumption(df)
     df_plot = df_consumption.reset_index().melt(id_vars=df_consumption.index.name, var_name='MDB', value_name='kWh')
 
-    fig = px.bar(df_plot, x=df_consumption.index.name, y='kWh', color='MDB', title='Electricity – MDB-level (no total line)')
+    fig = px.bar(df_plot, x=df_consumption.index.name, y='kWh', color='MDB', title='MDB-level consumption')
 
     st.plotly_chart(fig, use_container_width=True)
 
 
-def plot_contribution(df: pd.DataFrame) -> None:
+def plot_contribution(df_consumption: pd.DataFrame) -> None:
     """
     Displays a pie chart showing the percentage energy contribution
     of each specified MDB or meter based on interval data.
@@ -36,10 +39,9 @@ def plot_contribution(df: pd.DataFrame) -> None:
     - df: DataFrame with a datetime index and energy-related columns.
     - consumption_cols: List of cumulative or interval consumption columns to include.
     """
-    df_consumption = get_consumption(df)
-    if df_consumption.empty:
+    if len(df_consumption.columns) < 2:
         return
-
+    
     # Compute percentage contribution
     contribution = df_consumption.sum() / df_consumption.sum().sum() * 100
 
@@ -54,13 +56,14 @@ def plot_contribution(df: pd.DataFrame) -> None:
     st.plotly_chart(fig, use_container_width=True)
 
 
-def plot_profiles(df):
+def plot_profiles(df_consumption):
     """
     Display average 24-hour load profiles for weekdays and weekends.
     Assumes df is a time-indexed DataFrame and get_consumption(df) returns only kWh columns.
     """
     try:
-        df_consumption = get_consumption(df).copy()
+        df_consumption = df_consumption.copy()
+
         df_consumption['Hour'] = df_consumption.index.hour
         df_consumption['Weekday'] = df_consumption.index.weekday
 
@@ -80,7 +83,7 @@ def plot_profiles(df):
         pass
 
 
-def plot_monthheat(df: pd.DataFrame) -> None:
+def plot_monthheat(df_consumption: pd.DataFrame) -> None:
     """
     Displays a heatmap showing the seasonal energy usage profile (Hour vs Month).
     Automatically detects or derives interval energy consumption data.
@@ -88,10 +91,6 @@ def plot_monthheat(df: pd.DataFrame) -> None:
     Parameters:
     - df: DataFrame with a datetime index and energy-related columns.
     """
-    df_consumption = get_consumption(df)
-    if df_consumption.empty:
-        return
-
     # Compute total energy across all available columns
     df_consumption['total_kWh'] = df_consumption.sum(axis=1)
 
@@ -113,12 +112,11 @@ def plot_monthheat(df: pd.DataFrame) -> None:
     st.plotly_chart(fig, use_container_width=True)
 
 
-def plot_loadduration(df, pctl=0.05):
+def plot_loadduration(df_consumption, pctl=0.05):
     """
     Display the load duration curve with a base load reference line.
     Assumes df is a time-indexed DataFrame and get_consumption(df) returns only kWh columns.
     """
-    df_consumption = get_consumption(df)
     total_load = df_consumption.sum(axis=1)
 
     # Sort descending for Load Duration Curve

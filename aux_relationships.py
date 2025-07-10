@@ -8,23 +8,31 @@ def plot_relationships(df):
         st.warning("No numeric columns found for plotting.")
         return
 
-    with st.expander("Settings", expanded=True):
-        x_axis = st.selectbox("X", options=["Timestamp"] + numeric_columns, index=0)
-        y_axis_1 = st.selectbox("Y1", options=numeric_columns, index=0)
-        y_axis_2 = st.selectbox("Y2 (optional)", options=["None"] + numeric_columns, index=0)
+    with st.expander("Select Features", expanded=True):
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            x_axis = st.selectbox("X", options=["Timestamp"] + numeric_columns, index=0)
+        with col2:
+            y_axis_1 = st.selectbox("Y1", options=["None"] + numeric_columns, index=0)
+        with col3:
+            y_axis_2 = st.selectbox("Y2 (optional)", options=["None"] + numeric_columns, index=0)
 
     fig = go.Figure()
 
     x_data = df.index if x_axis == "Timestamp" else df[x_axis]
     plot_mode = "lines+markers" if x_axis == "Timestamp" else "markers"
 
-    fig.add_trace(go.Scatter(
-        x=x_data,
-        y=df[y_axis_1],
-        mode=plot_mode,
-        name=y_axis_1,
-        yaxis="y1"
-    ))
+    if y_axis_1 == "None" and y_axis_2 == "None":
+        return
+
+    if y_axis_1 != "None":
+        fig.add_trace(go.Scatter(
+            x=x_data,
+            y=df[y_axis_1],
+            mode=plot_mode,
+            name=y_axis_1,
+            yaxis="y1"
+        ))
 
     if y_axis_2 != "None" and y_axis_2 != y_axis_1:
         fig.add_trace(go.Scatter(

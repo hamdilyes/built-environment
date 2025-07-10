@@ -1,9 +1,9 @@
 import streamlit as st
 import numpy as np
 
-from tab_delta_t import delta_t_overview, plot_forecasted_cumulative_delta_t
-from tab_over_pumping import plot_overpumping
-from tab_short_cycling import plot_short_cycling
+from aux_delta_t import plot_delta_t
+from aux_over_pumping import plot_overpumping
+from aux_short_cycling import plot_short_cycling
 
 
 def tab_hvac(df):
@@ -12,18 +12,7 @@ def tab_hvac(df):
        not st.session_state.get("over_pumping", False) and \
        not st.session_state.get("short_cycling", False):
         
-        col1, col2 = st.columns(2)
-        col1.info("Low ∆T Root Causes were detected.")
-        explore_btn = col2.button("Root Causes", key="button_root_causes")
-        if explore_btn:
-            st.session_state.root_causes = True
-            st.rerun()
-
-        st.subheader("Overview")
-        delta_t_overview(df)
-
-        st.subheader("Month-to-Date")
-        plot_forecasted_cumulative_delta_t(df, 2.5)
+        plot_delta_t(df)
 
     # Hidden tab for Root Causes
     if st.session_state.get("root_causes", False):
@@ -65,12 +54,12 @@ def tab_root_causes():
             text-align: center;
             border-radius: 10px;
             border: none;
-            background-color: rgba(0, 255, 255, 0.05);
+            background-color: rgba(0, 255, 255, 0.1);
             transition: background-color 0.3s ease;
             cursor: pointer;
         }
         .root-btn:hover {
-            background-color: rgba(255, 255, 255, 0.05);
+            background-color: rgba(255, 255, 255, 0.1);
         }
         .blinking {
             animation: blink 1s infinite;

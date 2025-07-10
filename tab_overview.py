@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
-from aux_feature_selection import get_category_features
+from aux_overview import get_category_features
 
 def get_data_granularity(df):
     if df.empty or not isinstance(df.index, pd.DatetimeIndex):
@@ -31,7 +31,7 @@ def get_data_granularity(df):
         return f"{int(diff_minutes)}min"
 
 
-def show_dataset_overview(df):
+def tab_overview(df):
     if df.empty:
         return
 
