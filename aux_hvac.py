@@ -1,61 +1,40 @@
 import pandas as pd
 import streamlit as st
+import plotly.graph_objects as go
+
+from aux_hvac_1 import get_delta_t, get_flow, get_cop
 
 
-def get_delta_t(df: pd.DataFrame) -> pd.DataFrame:
-    selections = st.session_state.get("selections", {})
+def plot_live(df):
+    delta_t_df = get_delta_t(df)
+    if delta_t_df is None or delta_t_df.empty:
+        st.warning("NO DATA.")
+        return
 
-    supply_cols = sorted(selections.get("Chiller Supply Temperature", []))
-    return_cols = sorted(selections.get("Chiller Return Temperature", []))
+    col1, col2, col3 = st.columns(3)
 
-    if not supply_cols or not return_cols:
-        return pd.DataFrame()
+    try:
+        df_delta_t = get_delta_t(df)
+        live_delta_t = None
+        if not df_delta_t.dropna().empty:
+            live_delta_t = float(df_delta_t.dropna().iloc[-1])
+        col1.metric("∆T", f"{live_delta_t:.2f} °C")
+    except:
+        col3.metric("∆T", "...")
 
-    delta_t_data = {}
-    for supply_col, return_col in zip(supply_cols, return_cols):
-        delta_col_name = f"DeltaT_{return_col.replace('Chiller Return Temperature', '').strip()}"
-        delta_t_data[delta_col_name] = df[return_col] - df[supply_col]
+    try:
+        df_flow = get_flow(df)
+        live_flow = None
+        if not df_flow.dropna().empty:
+            live_flow = round(float(df_flow.dropna().iloc[-1]),2)
+        col2.metric("Flow", f"{live_flow:.2f} L/s")
+    except:
+        col3.metric("Flow", "...")
 
-    return pd.DataFrame(delta_t_data, index=df.index).dropna(how='all')
-
-
-def get_flow(df: pd.DataFrame) -> pd.DataFrame:
-    selections = st.session_state.get("selections", {})
-
-    flow_cols = sorted(selections.get("Flow", []))
-
-    if not flow_cols:
-        return pd.DataFrame()
-
-    flow_data = df[flow_cols].copy()
-    flow_data.columns = [f"Flow_{col.replace('Flow', '').strip()}" for col in flow_cols]
-
-    return flow_data.dropna(how='all')
-
-
-def get_supply_temperature(df: pd.DataFrame) -> pd.DataFrame:
-    selections = st.session_state.get("selections", {})
-
-    return_cols = sorted(selections.get("Chiller Supply Temperature", []))
-
-    if not return_cols:
-        return pd.DataFrame()
-
-    return_data = df[return_cols].copy()
-    return_data.columns = [f"Return_{col.replace('Chiller Supply Temperature', '').strip()}" for col in return_cols]
-
-    return return_data.dropna(how='all')
-
-
-def get_setpoint(df: pd.DataFrame) -> pd.DataFrame:
-    selections = st.session_state.get("selections", {})
-
-    setpoint_cols = sorted(selections.get("Chiller Set-point Temperature", []))
-
-    if not setpoint_cols:
-        return pd.DataFrame()
-
-    setpoint_data = df[setpoint_cols].copy()
-    setpoint_data.columns = [f"Setpoint_{col.replace('Chiller Set-point Temperature', '').strip()}" for col in setpoint_cols]
-
-    return setpoint_data.dropna(how='all')
+    try:
+        df_cop = get_cop(df)
+        live_cop = None
+        live_cop = round(float(df_cop.dropna().iloc[-1]["COP* plant"]),2)
+        col3.metric("COP", f"{live_cop:.2f}")
+    except:
+        col3.metric("COP", "...")
