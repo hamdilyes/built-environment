@@ -3,7 +3,7 @@ import streamlit as st
 from statsforecast import StatsForecast
 from statsforecast.models import MSTL
 
-from aux_hvac import get_delta_t
+from aux_hvac_get import get_delta_t
 
 
 def mstl(df, season_length=[7], steps=7):
@@ -22,9 +22,7 @@ def mstl(df, season_length=[7], steps=7):
     return forecast
 
 
-def get_forecasted_cumulative_delta_t(df: pd.DataFrame):
-    delta_t_df = get_delta_t(df)
-
+def get_forecasted_cumulative_delta_t(delta_t_df):
     if delta_t_df.empty:
         return None, None, None, None
 
@@ -36,6 +34,10 @@ def get_forecasted_cumulative_delta_t(df: pd.DataFrame):
     current_month = last_date.month
     current_year = last_date.year
     daily_df = daily_df[(daily_df.index.month == current_month) & (daily_df.index.year == current_year)]
+
+    # Drop last 15 days if last entry is end of month
+    if daily_df.index[-1].is_month_end:
+        daily_df = daily_df.iloc[:-15] if len(daily_df) > 15 else pd.DataFrame()
 
     if daily_df.empty:
         return None, None, None, None

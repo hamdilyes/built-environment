@@ -4,6 +4,8 @@ import numpy as np
 from aux_delta_t import plot_delta_t
 from aux_over_pumping import plot_overpumping
 from aux_short_cycling import plot_short_cycling
+from aux_hvac import plot_live
+from aux_cop import plot_cop
 
 
 def tab_hvac(df):
@@ -12,7 +14,17 @@ def tab_hvac(df):
        not st.session_state.get("over_pumping", False) and \
        not st.session_state.get("short_cycling", False):
         
-        plot_delta_t(df)
+        with st.expander("Live HVAC", expanded=True):
+            plot_live(df)
+        
+        # plot_live(df)
+        col1, col2 = st.columns(2)
+        with col1:
+            with st.expander("∆T", expanded=False):
+                plot_delta_t(df)
+        with col2:
+            with st.expander("COP", expanded=False):
+                plot_cop(df)
 
     # Hidden tab for Root Causes
     if st.session_state.get("root_causes", False):

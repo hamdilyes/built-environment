@@ -2,7 +2,7 @@ import streamlit as st
 import plotly.graph_objects as go
 from datetime import timedelta
 
-from aux_hvac import get_setpoint, get_supply_temperature
+from aux_hvac_get import get_setpoint, get_supply_temperature
 
 def plot_short_cycling(df):
     # Get the supply temperature and setpoint DataFrames

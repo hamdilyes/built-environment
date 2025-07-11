@@ -14,8 +14,8 @@ def columns_categories(df: pd.DataFrame) -> dict[str, list[str]]:
     Return a dictionary of categorized columns.
     """
     categories = {
-        "Power Meter": ["actenergydlvd", "mdb"],
-        "Power Consumption": ["kwh", "consumption"],
+        "Power Meter": ["mdb"],
+        # "Power Consumption": [],
         "Delta T": ["delta"],
         "Flow": ["flow"],
         "Chiller Supply Temperature": ["suptemp", "suphdrtemp"],
