@@ -28,7 +28,7 @@ def tab_hvac_1(df):
         return
     
     if not st.session_state.get("run_hvac_1", False):
-        st.session_state.run_hvac_1 = True
+        st.session_state.run_hvac_1 = False
     
     if st.button("RUN / HIDE", key='button_run_hvac_1'):
         st.session_state.run_hvac_1 = not st.session_state.run_hvac_1

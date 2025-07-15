@@ -52,7 +52,7 @@ def render_tabs(df, filtered_df=None):
             func()
 
 
-def create_data_frame(source, customer, use_case="Tier 2 - CSV"):
+def create_data_frame(customer, use_case):
     """
     Main function to create the dataframe based on selected source and customer
     """
@@ -61,6 +61,7 @@ def create_data_frame(source, customer, use_case="Tier 2 - CSV"):
     
     if use_case == 'Tier 1 - Clickhouse':
         if DISABLE_CLICKHOUSE:
+            
             return
         try:
             df = load_clickhouse(customer)
@@ -85,7 +86,6 @@ selected_use_case = st.sidebar.selectbox("Source", use_cases, index=0)
 
 st.sidebar.markdown("---")
 
-selected_source = None
 selected_customer = None
 selected_building = None
 selected_sensor = None
@@ -95,7 +95,7 @@ df = pd.DataFrame()
 if selected_use_case == tier2_csv:
     st.sidebar.subheader("📁")
     uploaded_files = st.sidebar.file_uploader(
-        "Data Upload",
+        "Upload",
         type=['csv'],
         accept_multiple_files=True,
         help="CSV files will be combined."
@@ -115,7 +115,7 @@ else:
 
     try:
         with st.spinner("Loading data..."):
-            df = create_data_frame(selected_source, selected_customer, selected_use_case)
+            df = create_data_frame(selected_customer, selected_use_case)
 
         if df is None or df.empty:
             df = pd.DataFrame()
