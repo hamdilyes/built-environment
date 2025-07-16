@@ -148,7 +148,6 @@ def process_single_csv(uploaded_file) -> Tuple[pd.DataFrame, str]:
             raise ValueError(f"Could not read {uploaded_file.name} with any encoding")
         timestamp_col = detect_timestamp_column(df)
         if timestamp_col is None:
-            st.error(f"❌ No timestamp column detected in {uploaded_file.name}")
             raise ValueError(f"No timestamp column found in {uploaded_file.name}")
         processed_df = parse_timestamp_column(df, timestamp_col)
         processed_df['source_file'] = uploaded_file.name

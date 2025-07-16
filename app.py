@@ -10,9 +10,9 @@ from load_csv import process_uploaded_csvs
 
 from tab_overview import tab_overview
 from tab_interactive import tab_interactive
-from tab_mdb_1 import tab_mdb_1
 from tab_hvac import tab_hvac
-from tab_hvac_1 import tab_hvac_1
+from tab_mdb import tab_mdb
+from tab_sensor import tab_sensor
 
 
 DISABLE_CLICKHOUSE = True
@@ -38,11 +38,11 @@ def render_tabs(df, filtered_df=None):
     data_for_analysis = filtered_df if filtered_df is not None else df
 
     tab_functions = {
-        "Overview": lambda: tab_overview(df),
-        "Interactive": lambda: tab_interactive(data_for_analysis),
-        "MDB": lambda: tab_mdb_1(df),
-        "HVAC": lambda: tab_hvac_1(df),
-        'HVAC 2.0': lambda: tab_hvac(df),
+        "OVERVIEW": lambda: tab_overview(df),
+        "CHARTS": lambda: tab_interactive(data_for_analysis),
+        "DATA QUALITY": lambda: tab_sensor(df),
+        "MDB": lambda: tab_mdb(df),
+        'HVAC': lambda: tab_hvac(df),
     }
 
     tabs = st.tabs(tab_functions.keys())
@@ -52,7 +52,7 @@ def render_tabs(df, filtered_df=None):
             func()
 
 
-def create_data_frame(source, customer, use_case="Tier 2 - CSV"):
+def create_data_frame(customer, use_case):
     """
     Main function to create the dataframe based on selected source and customer
     """
@@ -61,6 +61,7 @@ def create_data_frame(source, customer, use_case="Tier 2 - CSV"):
     
     if use_case == 'Tier 1 - Clickhouse':
         if DISABLE_CLICKHOUSE:
+            
             return
         try:
             df = load_clickhouse(customer)
@@ -85,7 +86,6 @@ selected_use_case = st.sidebar.selectbox("Source", use_cases, index=0)
 
 st.sidebar.markdown("---")
 
-selected_source = None
 selected_customer = None
 selected_building = None
 selected_sensor = None
@@ -95,7 +95,7 @@ df = pd.DataFrame()
 if selected_use_case == tier2_csv:
     st.sidebar.subheader("📁")
     uploaded_files = st.sidebar.file_uploader(
-        "Data Upload",
+        "Upload",
         type=['csv'],
         accept_multiple_files=True,
         help="CSV files will be combined."
@@ -115,7 +115,7 @@ else:
 
     try:
         with st.spinner("Loading data..."):
-            df = create_data_frame(selected_source, selected_customer, selected_use_case)
+            df = create_data_frame(selected_customer, selected_use_case)
 
         if df is None or df.empty:
             df = pd.DataFrame()
