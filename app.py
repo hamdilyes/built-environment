@@ -10,9 +10,9 @@ from load_csv import process_uploaded_csvs
 
 from tab_overview import tab_overview
 from tab_interactive import tab_interactive
-from tab_mdb_1 import tab_mdb_1
 from tab_hvac import tab_hvac
-from tab_hvac_1 import tab_hvac_1
+from tab_mdb import tab_mdb
+from tab_sensor import tab_sensor
 
 
 DISABLE_CLICKHOUSE = True
@@ -38,11 +38,11 @@ def render_tabs(df, filtered_df=None):
     data_for_analysis = filtered_df if filtered_df is not None else df
 
     tab_functions = {
-        "Overview": lambda: tab_overview(df),
-        "Interactive": lambda: tab_interactive(data_for_analysis),
-        "MDB": lambda: tab_mdb_1(df),
-        "HVAC": lambda: tab_hvac_1(df),
-        'HVAC 2.0': lambda: tab_hvac(df),
+        "OVERVIEW": lambda: tab_overview(df),
+        "CHARTS": lambda: tab_interactive(data_for_analysis),
+        "DATA QUALITY": lambda: tab_sensor(df),
+        "MDB": lambda: tab_mdb(df),
+        'HVAC': lambda: tab_hvac(df),
     }
 
     tabs = st.tabs(tab_functions.keys())
