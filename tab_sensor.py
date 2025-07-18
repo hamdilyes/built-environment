@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 
-from aux_sensor_diagnostics import diagnostic_tools_collection
+from aux_sensor import diagnostic_tools_collection
 
 
 def tab_sensor(df: pd.DataFrame):  
