@@ -13,6 +13,7 @@ from tab_interactive import tab_interactive
 from tab_hvac import tab_hvac
 from tab_mdb import tab_mdb
 from tab_sensor import tab_sensor
+from tab_dwtc import tab_dwtc
 
 
 DISABLE_CLICKHOUSE = True
@@ -43,6 +44,7 @@ def render_tabs(df, filtered_df=None):
         "DATA QUALITY": lambda: tab_sensor(df),
         "MDB": lambda: tab_mdb(df),
         'HVAC': lambda: tab_hvac(df),
+        'DWTC HVAC': lambda: tab_dwtc(df),
     }
 
     tabs = st.tabs(tab_functions.keys())

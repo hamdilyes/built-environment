@@ -16,30 +16,6 @@ def tab_hvac(df):
         
         with st.expander("LIVE HVAC", expanded=True):
             plot_live(df)
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            with st.expander("Sanity Checks"):
-                st.write("✅ Supply and return temperatures are within expected range.")
-                st.write("✅ No missing values detected in last 24 hours.")
-                st.write("⚠️ Flow rate shows occasional spikes.")
-                st.write("✅ Sensor readings align with historical scales.")
-                st.write("🔍 Minor fluctuation detected in BTU-02 temperature sensor.")
-
-        with col2:
-            with st.expander("Inefficiencies"):
-                st.write("⚠️ Chiller-02 operating continuously at max load.")
-                st.write("❌ ΔT below recommended efficiency threshold.")
-                st.write("⚠️ Pumps running at full speed despite low demand.")
-                st.write("🔍 Cooling active during unoccupied hours.")
-                st.write("⚠️ COP dropped by 15% compared to baseline.")
-
-        with col3:
-            with st.expander("Potential Cost Savings"):
-                st.write("✅ Schedule pre-cooling during off-peak tariff periods.")
-                st.write("🔍 Reduce setpoint for low-use zones to prevent overcooling.")
-                st.write("✅ Modulate pump speeds to match real-time load.")
-                st.write("⚠️ Inspect Chiller-02 for fouling or performance issues.")
-                st.write("✅ Align HVAC start-stop with actual occupancy.")
         
         col1, col2 = st.columns(2)
         with col1:
