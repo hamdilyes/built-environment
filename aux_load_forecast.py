@@ -20,12 +20,12 @@ def mstl(df, season_length=[7], steps=7):
     return forecast
 
 
-def get_forecasted_cumulative_delta_t(delta_t_df):
+def get_forecasted_cumulative_load(delta_t_df):
     if delta_t_df.empty:
         return None, None, None, None
 
-    # Resample to daily mean
-    daily_df = delta_t_df.resample('D').mean()
+    # Resample to daily sum
+    daily_df = delta_t_df.resample('D').sum()
 
     # Filter for current month and year
     last_date = daily_df.index.max()
@@ -59,25 +59,23 @@ def get_forecasted_cumulative_delta_t(delta_t_df):
 
     # If no future dates left
     if forecast_days <= 0:
-        return daily_series, None, None, None
+        cumulative_actual = daily_series.cumsum()
+        return cumulative_actual, None, cumulative_actual, None
 
     # Perform forecast
     forecast_df = mstl(df_forecast, season_length=[7], steps=forecast_days)
     forecast_df = forecast_df.rename(columns={"MSTL": "Delta T"})
     forecast_df['ds'] = pd.to_datetime(forecast_df['ds'])
     forecast_index = pd.DatetimeIndex(forecast_df['ds'])
+    forecast_series = pd.Series(forecast_df['Delta T'].values, index=forecast_index)
 
-    # Combine
-    combined_series = pd.concat([
-        daily_series,
-        pd.Series(forecast_df['Delta T'].values, index=forecast_index)
-    ])
+    # Cumulative actual
+    cumulative_actual = daily_series.cumsum()
 
-    # Compute cumulative means
-    cumulative_actual = daily_series.expanding().mean()
-    cumulative_forecast = pd.Series(
-        combined_series.loc[forecast_index].expanding().mean().values,
-        index=forecast_index
-    )
+    # Cumulative forecast (starting from last actual cumulative value)
+    cumulative_forecast = forecast_series.cumsum() + cumulative_actual.iloc[-1]
+
+    # Combined cumulative (actual + forecast)
+    combined_series = pd.concat([cumulative_actual, cumulative_forecast])
 
     return cumulative_actual, cumulative_forecast, combined_series, forecast_index

@@ -4,19 +4,19 @@ from datetime import timedelta
 
 from aux_hvac_get import get_setpoint, get_supply_temperature
 
-def plot_short_cycling(df):
+def plot_short_cycling(df, customer):
     # Get the supply temperature and setpoint DataFrames
-    supply_temp_df = get_supply_temperature(df).min(axis=1)
-    setpoint_df = get_setpoint(df).mean(axis=1)
+    supply_temp_df = get_supply_temperature(df, customer).min(axis=1)
+    setpoint_df = get_setpoint(df, customer).mean(axis=1)
 
     # Filter to last 30 days
     if df.index.max() is None:
         st.warning("No timestamp information available.")
         return
 
-    end_time = df.index.max()
+    end_time = max(setpoint_df.index.max(), supply_temp_df.index.max())
     start_time = end_time - timedelta(days=7)
-
+    
     supply_temp_df = supply_temp_df.loc[start_time:end_time]
     setpoint_df = setpoint_df.loc[start_time:end_time]
 
@@ -53,4 +53,4 @@ def plot_short_cycling(df):
         height=600,
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, key='short_cycling_'+customer)

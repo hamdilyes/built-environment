@@ -2,7 +2,7 @@ import pandas as pd
 import streamlit as st
 
 
-def get_delta_t(df: pd.DataFrame) -> pd.DataFrame:
+def get_delta_t(df: pd.DataFrame, customer) -> pd.DataFrame:
     selections = st.session_state.get("selections", {})
 
     supply_cols = sorted(selections.get("Chiller Supply Temperature", []))
@@ -20,13 +20,13 @@ def get_delta_t(df: pd.DataFrame) -> pd.DataFrame:
 
     delta_t_data = {}
     for supply_col, return_col in zip(supply_cols, return_cols):
-        delta_col_name = f"DeltaT_{return_col[:10]}"
+        delta_col_name = f"DeltaT_{return_col}"
         delta_t_data[delta_col_name] = df[return_col] - df[supply_col]
 
     return pd.DataFrame(delta_t_data, index=df.index).dropna(how='all')
 
 
-def get_flow(df: pd.DataFrame) -> pd.DataFrame:
+def get_flow(df: pd.DataFrame, customer) -> pd.DataFrame:
     selections = st.session_state.get("selections", {})
 
     flow_cols = sorted(selections.get("Flow", []))
@@ -40,7 +40,7 @@ def get_flow(df: pd.DataFrame) -> pd.DataFrame:
     return flow_data.dropna(how='all')
 
 
-def get_supply_temperature(df: pd.DataFrame) -> pd.DataFrame:
+def get_supply_temperature(df: pd.DataFrame, customer) -> pd.DataFrame:
     selections = st.session_state.get("selections", {})
 
     return_cols = sorted(selections.get("Chiller Supply Temperature", []))
@@ -54,7 +54,7 @@ def get_supply_temperature(df: pd.DataFrame) -> pd.DataFrame:
     return return_data.dropna(how='all')
 
 
-def get_setpoint(df: pd.DataFrame) -> pd.DataFrame:
+def get_setpoint(df: pd.DataFrame, customer) -> pd.DataFrame:
     selections = st.session_state.get("selections", {})
 
     setpoint_cols = sorted(selections.get("Chiller Set-point Temperature", []))

@@ -8,7 +8,7 @@ from plotly.subplots import make_subplots
 from aux_hvac_1 import (
     get_delta_t,
     get_oat,
-    get_cop,
+    get_load,
 
     plot_delta_t,
     plot_cop_oat,
@@ -41,7 +41,7 @@ def tab_hvac_1_run(df):
     # definitions
     df_delta_t = get_delta_t(df)
     df_oat = get_oat(df)
-    df_cop = get_cop(df)
+    df_cop = get_load(df)
 
     # plots
     plot_delta_t(df_delta_t)

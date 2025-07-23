@@ -1,43 +1,76 @@
 import pandas as pd
 import plotly.express as px
 import numpy as np
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 import streamlit as st
 
+FEATURE_MAP = {
+    'dwtc': {
+        'delta_t': 'chw_delta_temp_celsius',
+        'flow': 'vol_litres_per_sec',
+        'load': 'energy_kw',
+    },
 
-##### AUX #####
+    'freimtech': {
+        'supply_temp': 'BTU-01_SupTemp_degC',
+        'return_temp': 'BTU-01_RetTemp_degC',
+        'oat': 'OAT-SENSOR_OutAirTemp (°C)',
+        'flow': 'BTU-01_ChwFlow_L/s',
+    },
+}
 
-def get_delta_t(df) -> pd.Series:
-    sup_col = "BTU-01_SupTemp_degC"
-    ret_col = "BTU-01_RetTemp_degC"
-    lo = 0
-    hi = 25
+
+def get_delta_t(df, customer: str) -> pd.DataFrame | None:
+    site_map = FEATURE_MAP.get(customer)
+
+    if 'delta_t' in site_map:
+        return df[[site_map['delta_t']]]
+
+    if not site_map or 'supply_temp' not in site_map or 'return_temp' not in site_map:
+        return
+
+    sup_col = site_map['supply_temp']
+    ret_col = site_map['return_temp']
+    lo, hi = 0, 25
+
     if any(col not in df.columns for col in [sup_col, ret_col]):
         return
+
     mask = (
-            (df[sup_col] >= lo) & (df[sup_col] <= hi) &
-            (df[ret_col] >= lo) & (df[ret_col] <= hi)
+        (df[sup_col] >= lo) & (df[sup_col] <= hi) &
+        (df[ret_col] >= lo) & (df[ret_col] <= hi)
     )
     delta = (df.loc[mask, ret_col] - df.loc[mask, sup_col]).rename("ΔT_°C")
     return delta.to_frame()
 
 
-def get_oat(df):
-    if "OAT-SENSOR_OutAirTemp (°C)" not in df.columns:
+def get_oat(df, customer: str) -> pd.DataFrame | None:
+    site_map = FEATURE_MAP.get(customer)
+    oat_col = site_map.get('oat') if site_map else None
+
+    if not oat_col or oat_col not in df.columns:
         return
-    
-    return df[["OAT-SENSOR_OutAirTemp (°C)"]]
+
+    return df[[oat_col]]
 
 
-def get_flow(df):
-    if "BTU-01_ChwFlow_L/s" not in df.columns:
+def get_flow(df, customer: str) -> pd.DataFrame | None:
+    site_map = FEATURE_MAP.get(customer)
+    flow_col = site_map.get('flow') if site_map else None
+    if not flow_col or flow_col not in df.columns:
         return
-    
-    return df[["BTU-01_ChwFlow_L/s"]]
+    return df[[flow_col]]
 
 
-def get_cop(df):
+def get_load(df, customer):
+    site_map = FEATURE_MAP.get(customer)
+    load_col = site_map.get('load') if site_map else None
+    if load_col:
+        if not load_col or load_col not in df.columns:
+            return
+        return df[[load_col]]/4
+
+
+def get_cop(df, customer):
     if any(col not in df.columns for col in ["Value_BTU_Meter_Data_2024", "Value_Chiller_1_kWh_2024", "Value_Chiller_2_kWh_2024", "Value_Chiller_3_kWh_2024"]):
         return
 
@@ -71,10 +104,10 @@ def plot_delta_t(delta_t: pd.Series):
         return
 
     df = delta_t
-    df["doy"] = df.index.dayofyear
+    df["day"] = df.index.dayofyear
     df["hour"] = df.index.hour
     pivot = (
-        df.pivot_table(index="hour", columns="doy", values="ΔT_°C", aggfunc="mean")
+        df.pivot_table(index="hour", columns="day", values="ΔT_°C", aggfunc="mean")
           .iloc[::-1]                                # midnight at top
     )
 

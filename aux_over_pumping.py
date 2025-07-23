@@ -3,13 +3,13 @@ import streamlit as st
 import plotly.graph_objects as go
 import numpy as np
 
-from aux_hvac_get import get_delta_t, get_flow
+from aux_hvac_1 import get_delta_t, get_flow
 
 
-def plot_overpumping(df):
+def plot_overpumping(df, customer):
     over_pumping_dict = {
-        'Summer': lambda: plot_overpumping_summer(df),
-        'Restrictor': lambda: plot_overpumping_restrictor(df),
+        'Summer': lambda: plot_overpumping_summer(df, customer),
+        'Restrictor': lambda: plot_overpumping_restrictor(df, customer),
     }
 
     over_pumping_cases = list(over_pumping_dict.keys())
@@ -24,9 +24,9 @@ def plot_overpumping(df):
                         over_pumping_dict[case]()
 
 
-def plot_overpumping_summer(df: pd.DataFrame):
-    delta_t_df = get_delta_t(df).sum(axis=1)
-    flow_df = get_flow(df).sum(axis=1)
+def plot_overpumping_summer(df: pd.DataFrame, customer):
+    delta_t_df = get_delta_t(df, customer).sum(axis=1)
+    flow_df = get_flow(df, customer).sum(axis=1)
 
     if delta_t_df.empty or flow_df.empty:
         st.warning("Insufficient data for over-pumping plot.")
@@ -87,15 +87,17 @@ def plot_overpumping_summer(df: pd.DataFrame):
     )
     fig.update_yaxes(showgrid=False)
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, key='summer_'+customer)
 
 
-def plot_overpumping_restrictor(df: pd.DataFrame, threshold=25):
+def plot_overpumping_restrictor(df: pd.DataFrame, customer):
     """
     Plot the impact of flow limiting on delta T showing monthly averages
     """
-    delta_t_df = get_delta_t(df).sum(axis=1)
-    flow_df = get_flow(df).sum(axis=1)
+    threshold = 25
+    #
+    delta_t_df = get_delta_t(df, customer).sum(axis=1)
+    flow_df = get_flow(df, customer).sum(axis=1)
     
     if delta_t_df.empty or flow_df.empty:
         st.warning("Insufficient data for over-pumping average analysis.")
@@ -161,7 +163,7 @@ def plot_overpumping_restrictor(df: pd.DataFrame, threshold=25):
     
     fig.update_yaxes(showgrid=False)
     
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, key='restrictor_'+customer)
     
     # Calculate and display summary metrics
     avg_delta_t_current = delta_t_monthly.mean()

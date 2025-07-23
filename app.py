@@ -43,7 +43,7 @@ def render_tabs(df, filtered_df=None):
         "CHARTS": lambda: tab_interactive(data_for_analysis),
         "DATA QUALITY": lambda: tab_sensor(df),
         "MDB": lambda: tab_mdb(df),
-        'HVAC': lambda: tab_hvac(df),
+        'FREIMTECH HVAC': lambda: tab_hvac(df),
         'DWTC HVAC': lambda: tab_dwtc(df),
     }
 
