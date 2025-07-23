@@ -20,7 +20,7 @@ def mstl(df, season_length=[7], steps=7):
     return forecast
 
 
-def get_forecasted_cumulative_load(delta_t_df):
+def get_forecasted_load(delta_t_df):
     if delta_t_df.empty:
         return None, None, None, None
 
@@ -59,7 +59,7 @@ def get_forecasted_cumulative_load(delta_t_df):
 
     # If no future dates left
     if forecast_days <= 0:
-        cumulative_actual = daily_series.cumsum()
+        cumulative_actual = daily_series
         return cumulative_actual, None, cumulative_actual, None
 
     # Perform forecast
@@ -70,10 +70,10 @@ def get_forecasted_cumulative_load(delta_t_df):
     forecast_series = pd.Series(forecast_df['Delta T'].values, index=forecast_index)
 
     # Cumulative actual
-    cumulative_actual = daily_series.cumsum()
+    cumulative_actual = daily_series
 
     # Cumulative forecast (starting from last actual cumulative value)
-    cumulative_forecast = forecast_series.cumsum() + cumulative_actual.iloc[-1]
+    cumulative_forecast = forecast_series
 
     # Combined cumulative (actual + forecast)
     combined_series = pd.concat([cumulative_actual, cumulative_forecast])

@@ -15,17 +15,18 @@ from aux_hvac_1 import (
 )
 
 
-def tab_hvac_1(df):
-    required_columns = [
-        "BTU-01_SupTemp_degC",
-        "BTU-01_RetTemp_degC",
-        "OAT-SENSOR_OutAirTemp (°C)",
-    ]
+def tab_hvac_1(df, customer='dwtc'):
+    # required_columns = [
+    #     "BTU-01_SupTemp_degC",
+    #     "BTU-01_RetTemp_degC",
+    #     "OAT-SENSOR_OutAirTemp (°C)",
+    # ]
     
-    has_required_column = any(col in df.columns for col in required_columns)
+    # has_required_column = any(col in df.columns for col in required_columns)
     
-    if not has_required_column:
-        return
+    # if not has_required_column:
+    #     st.warning('NO DATA')
+    #     return
     
     if not st.session_state.get("run_hvac_1", False):
         st.session_state.run_hvac_1 = False
@@ -34,14 +35,14 @@ def tab_hvac_1(df):
         st.session_state.run_hvac_1 = not st.session_state.run_hvac_1
     
     if st.session_state.get("run_hvac_1", False):
-        tab_hvac_1_run(df)
+        tab_hvac_1_run(df, customer)
 
 
-def tab_hvac_1_run(df):
+def tab_hvac_1_run(df, customer):
     # definitions
-    df_delta_t = get_delta_t(df)
-    df_oat = get_oat(df)
-    df_cop = get_load(df)
+    df_delta_t = get_delta_t(df, customer)
+    df_oat = get_oat(df, customer)
+    df_cop = get_load(df, customer)
 
     # plots
     plot_delta_t(df_delta_t)

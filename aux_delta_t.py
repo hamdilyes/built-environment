@@ -13,7 +13,7 @@ def plot_delta_t(df, customer):
         return
 
     delta_t_overview(df, customer)
-    plot_forecasted_cumulative_delta_t(df, 7, customer)
+    plot_forecasted_cumulative_delta_t(df, None, customer)
 
 
 def delta_t_overview(df: pd.DataFrame, customer):

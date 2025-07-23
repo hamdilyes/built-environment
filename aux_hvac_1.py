@@ -102,12 +102,14 @@ def get_cop(df, customer):
 def plot_delta_t(delta_t: pd.Series):
     if delta_t is None:
         return
+    
+    values = delta_t.columns[0]
 
     df = delta_t
     df["day"] = df.index.dayofyear
     df["hour"] = df.index.hour
     pivot = (
-        df.pivot_table(index="hour", columns="day", values="ΔT_°C", aggfunc="mean")
+        df.pivot_table(index="hour", columns="day", values=values, aggfunc="mean")
           .iloc[::-1]                                # midnight at top
     )
 
@@ -115,7 +117,7 @@ def plot_delta_t(delta_t: pd.Series):
         pivot, aspect="auto", origin="lower",
         color_continuous_scale="RdBu_r",
         labels=dict(x="Day of Year", y="Hour", color="ΔT (°C)"),
-        title="Supply-Return ΔT – Hourly Mean Calendar",
+        title="ΔT – Hourly Mean Calendar",
     )
     fig.update_coloraxes(cmin=0, cmax=8)
     st.plotly_chart(fig, use_container_width=True)

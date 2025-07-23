@@ -3,7 +3,7 @@ import streamlit as st
 import plotly.graph_objects as go
 
 from aux_hvac_1 import get_load
-from aux_load_forecast import get_forecasted_cumulative_load
+from aux_load_forecast import get_forecasted_load
 
 
 def plot_load(df, customer):
@@ -37,7 +37,7 @@ def load_overview(df: pd.DataFrame, customer):
     current_month_df = delta_t_df[
         (delta_t_df.index.month == current_month) & (delta_t_df.index.year == current_year)
     ]
-    current_month_sum = current_month_df.sum(axis=1).cumsum().iloc[-1] if not current_month_df.empty else None
+    current_month_sum = current_month_df.sum(axis=1).sum() if not current_month_df.empty else None
 
     # Filter for previous month, handle year boundary
     prev_month = current_month - 1 if current_month > 1 else 12
@@ -45,11 +45,11 @@ def load_overview(df: pd.DataFrame, customer):
     prev_month_df = delta_t_df[
         (delta_t_df.index.month == prev_month) & (delta_t_df.index.year == prev_year)
     ]
-    prev_month_sum = prev_month_df.sum(axis=1).cumsum().iloc[-1] if not prev_month_df.empty else None
+    prev_month_sum = prev_month_df.sum(axis=1).sum() if not prev_month_df.empty else None
 
     # ---- Forecast ----
-    cumulative_actual, cumulative_forecast, combined_series, forecast_index = get_forecasted_cumulative_load(delta_t_df)
-    forecasted_sum = combined_series.iloc[-1] if combined_series is not None and not combined_series.empty else None
+    cumulative_actual, cumulative_forecast, combined_series, forecast_index = get_forecasted_load(delta_t_df)
+    forecasted_sum = combined_series.sum() if combined_series is not None and not combined_series.empty else None
 
     # Display metrics side by side
     col1, col2, col4 = st.columns(3)
@@ -70,14 +70,22 @@ def plot_forecasted_load(df, threshold, customer):
     delta_t_df = get_load(df, customer)
 
     # Get forecasted cumulative load data
-    cumulative_actual, cumulative_forecast, combined_series, forecast_index = get_forecasted_cumulative_load(delta_t_df)
+    load_actual, load_forecast, combined_series, forecast_index = get_forecasted_load(delta_t_df)
 
-    if any(v is None for v in (cumulative_actual, cumulative_forecast, combined_series, forecast_index)):
+    if any(v is None for v in (load_actual, load_forecast, combined_series, forecast_index)):
         return
+    
+     # Adjust forecast to start from the last actual value
+    if load_forecast is not None and not load_actual.empty:
+        last_actual_ts = load_actual.index[-1]
+        last_actual_val = load_actual.iloc[-1]
 
-    # Compute actual (non-cumulative) values by taking first differences
-    load_actual = cumulative_actual.diff().dropna()
-    load_forecast = cumulative_forecast.diff().dropna()
+        # Create a new index and values for forecast starting from last actual point
+        forecast_index = forecast_index.insert(0, last_actual_ts)
+        load_forecast = pd.concat([
+            pd.Series([last_actual_val], index=[last_actual_ts]),
+            load_forecast
+        ])
 
     # Combine actual and forecast (excluding duplicate timestamp at forecast start)
     combined_load = pd.concat([load_actual, load_forecast[1:]])
