@@ -3,22 +3,22 @@ import streamlit as st
 import plotly.graph_objects as go
 
 from aux_delta_t_forecast import get_forecasted_cumulative_delta_t
-from aux_hvac_1 import get_load
+from aux_hvac_1 import get_cop
 
 
 def plot_cop(df, customer):
     # Check
-    delta_t_df = get_load(df, customer)
+    delta_t_df = get_cop(df, customer)
     if delta_t_df is None or delta_t_df.empty:
-        st.warning("NO DATA.")
+        st.warning("NO DATA")
         return
 
     cop_overview(df, customer)
-    plot_forecasted_cumulative_cop(df, 7, customer)
+    plot_forecasted_cumulative_cop(df, None, customer)
 
 
 def cop_overview(df: pd.DataFrame, customer):
-    delta_t_df = get_load(df, customer)[['COP* plant']]
+    delta_t_df = get_cop(df, customer)[['COP* plant']]
 
     # Get the latest available timestamp and sum values if multiple columns
     latest_ts = delta_t_df.index.max()
@@ -67,7 +67,7 @@ def cop_overview(df: pd.DataFrame, customer):
 
 
 def plot_forecasted_cumulative_cop(df, threshold, customer):
-    delta_t_df = get_load(df, customer)[['COP* plant']]
+    delta_t_df = get_cop(df, customer)[['COP* plant']]
     # get forecasted data
     cumulative_actual, cumulative_forecast, combined_series, forecast_index = get_forecasted_cumulative_delta_t(delta_t_df)
     

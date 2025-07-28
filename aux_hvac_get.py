@@ -66,3 +66,31 @@ def get_setpoint(df: pd.DataFrame, customer) -> pd.DataFrame:
     setpoint_data.columns = [f"Setpoint_{col.replace('Chiller Set-point Temperature', '').strip()}" for col in setpoint_cols]
 
     return setpoint_data.dropna(how='all')
+
+
+def get_capacity(df: pd.DataFrame, customer) -> pd.DataFrame:
+    selections = st.session_state.get("selections", {})
+
+    capacity_cols = sorted(selections.get("Chiller Used Capacity", []))
+
+    if not capacity_cols:
+        return pd.DataFrame()
+
+    capacity_data = df[capacity_cols].copy()
+    capacity_data.columns = [f"Capacity_{col.replace('Chiller Used Capacity', '').strip()}" for col in capacity_cols]
+
+    return capacity_data.dropna(how='all')
+
+
+def get_chillerload(df: pd.DataFrame, customer) -> pd.DataFrame:
+    selections = st.session_state.get("selections", {})
+
+    capacity_cols = sorted(selections.get("Power Consumption", []))
+
+    if not capacity_cols:
+        return pd.DataFrame()
+
+    capacity_data = df[capacity_cols].copy()
+    capacity_data.columns = [f"Capacity_{col.replace('Chiller Used Capacity', '').strip()}" for col in capacity_cols]
+
+    return capacity_data.dropna(how='all')

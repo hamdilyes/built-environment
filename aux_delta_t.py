@@ -64,9 +64,9 @@ def delta_t_overview(df: pd.DataFrame, customer):
         pct = (forecasted_avg/prev_month_avg - 1)*100
         col4.metric("Forecasted", f"{forecasted_avg:.2f} °C", f"{pct:.1f}%")
 
-    explore_btn = col5.button("Low ∆T Root Causes", key="button_root_causes_"+customer)
+    explore_btn = col5.button("⚠️ ALERT - ∆T < 8°C (Month-to-Date)", key="button_root_causes_"+customer)
     if explore_btn:
-        st.session_state['root_causes_'+customer] = True
+        st.session_state['root_causes_'+customer] = False
         st.rerun()
 
 

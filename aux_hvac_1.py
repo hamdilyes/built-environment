@@ -7,7 +7,7 @@ FEATURE_MAP = {
     'dwtc': {
         'delta_t': 'chw_delta_temp_celsius',
         'flow': 'vol_litres_per_sec',
-        'load': 'energy_kw',
+        'load': 'chw_energy_kw',
     },
 
     'freimtech': {
@@ -23,7 +23,10 @@ def get_delta_t(df, customer: str) -> pd.DataFrame | None:
     site_map = FEATURE_MAP.get(customer)
 
     if 'delta_t' in site_map:
-        return df[[site_map['delta_t']]]
+        try:
+            return df[[site_map['delta_t']]]
+        except:
+            return
 
     if not site_map or 'supply_temp' not in site_map or 'return_temp' not in site_map:
         return

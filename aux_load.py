@@ -10,7 +10,7 @@ def plot_load(df, customer):
     # Check
     delta_t_df = get_load(df, customer)
     if delta_t_df is None or delta_t_df.empty:
-        st.warning("NO DATA.")
+        st.warning("NO DATA")
         return
 
     load_overview(df, customer)

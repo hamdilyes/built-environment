@@ -4,15 +4,16 @@ import numpy as np
 from aux_delta_t import plot_delta_t
 from aux_over_pumping import plot_overpumping
 from aux_short_cycling import plot_short_cycling
-from aux_hvac import plot_live
+from aux_hvac import plot_live, plot_chillers_kpi
 from aux_cop import plot_cop
+from aux_chillers import plot_chillers
 
 
 def tab_hvac(df, customer='freimtech'):
     # Initial view
-    if not st.session_state.get("root_causes", False) and \
-       not st.session_state.get("over_pumping", False) and \
-       not st.session_state.get("short_cycling", False):
+    if not st.session_state.get("root_causes_"+customer, False) and \
+       not st.session_state.get("over_pumping_"+customer, False) and \
+       not st.session_state.get("short_cycling_"+customer, False):
         
         with st.expander("LIVE HVAC", expanded=True):
             plot_live(df, customer)
@@ -24,21 +25,28 @@ def tab_hvac(df, customer='freimtech'):
         with col2:
             with st.expander("COP", expanded=False):
                 plot_cop(df, customer)
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            with st.expander("CHILLERS", expanded=False):
+                plot_chillers(df, customer)
+        with col2:
+            plot_chillers_kpi(df, customer)
 
     # Hidden tab for Root Causes
-    if st.session_state.get("root_causes", False):
+    if st.session_state.get("root_causes_"+customer, False):
         tab1, = st.tabs(["Root Causes"])
         with tab1:
             tab_root_causes(customer)
 
     # Hidden tab for Over-Pumping
-    if st.session_state.get("over_pumping", False):
+    if st.session_state.get("over_pumping_"+customer, False):
         tab2, = st.tabs(["Over Pumping"])
         with tab2:
             tab_over_pumping(df, customer)
 
     # Hidden tab for Short-Cycling
-    if st.session_state.get("short_cycling", False):
+    if st.session_state.get("short_cycling_"+customer, False):
         tab3, = st.tabs(["Short Cycling"])
         with tab3:
             tab_short_cycling(df, customer)
@@ -47,7 +55,7 @@ def tab_hvac(df, customer='freimtech'):
 def tab_root_causes(customer):
     # Hide button
     if st.button("🔙", key="hide_root_causes_"+customer):
-        st.session_state.root_causes = False
+        st.session_state["root_causes_"+customer] = False
         st.rerun()
 
     st.markdown("### Low ∆T Root Cause Diagnostics")
@@ -89,16 +97,16 @@ def tab_root_causes(customer):
         "Over-Pumping": {
             "key": "form_over_pumping",
             "on_submit": lambda: (
-                setattr(st.session_state, "over_pumping", True),
-                setattr(st.session_state, "root_causes", False),
+                setattr(st.session_state, "over_pumping_"+customer, True),
+                setattr(st.session_state, "root_causes_"+customer, False),
                 st.rerun()
             )
         },
         "Short-Cycling": {
             "key": "form_short_cycling",
             "on_submit": lambda: (
-                setattr(st.session_state, "short_cycling", True),
-                setattr(st.session_state, "root_causes", False),
+                setattr(st.session_state, "short_cycling_"+customer, True),
+                setattr(st.session_state, "root_causes_"+customer, False),
                 st.rerun()
             )
         }
@@ -168,8 +176,8 @@ def tab_over_pumping(df, customer):
     col1, col2 = st.columns([1,25])
     with col1:
         if st.button("🔙", key="hide_over_pumping"):
-            st.session_state.over_pumping = False
-            st.session_state.root_causes = True
+            st.session_state['over_pumping_'+customer] = False
+            st.session_state["root_causes_"+customer] = False
             st.rerun()
 
     with col2:
@@ -206,10 +214,8 @@ def tab_over_pumping(df, customer):
 def tab_short_cycling(df, customer):
     hide_btn = st.button("🔙 ", key="hide_short_cycling")
     if hide_btn:
-        st.session_state.short_cycling = False
-        st.session_state.root_causes = True
+        st.session_state['short_cycling_'+customer] = False
+        st.session_state["root_causes_"+customer] = False
         st.rerun()
-
-    st.markdown("The set-point often isn’t met, and the chiller’s frequent cycling makes the system inefficient.")
 
     plot_short_cycling(df, customer)
