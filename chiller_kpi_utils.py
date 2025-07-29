@@ -305,7 +305,7 @@ def detect_cycles_minutes(run_minutes: pd.Series,
 
     cycles = pd.DataFrame(events)
     # Mark *short* ON or OFF periods
-    cycles["ShortCycle"] = cycles["Duration_min"] < min_off
+    cycles["ShortCycle"] = cycles["Duration_min"] < min_off if "Duration_min" in cycles.columns else False
     return cycles
 
 def operating_hours(run_minutes: pd.Series, window: str = "D") -> pd.Series:

@@ -28,7 +28,7 @@ def tab_hvac(df, customer='freimtech'):
         
         col1, col2 = st.columns(2)
         with col1:
-            with st.expander("CHILLERS", expanded=False):
+            with st.expander("MONTH-TO-DATE CHILLER ANALYSIS", expanded=False):
                 plot_chillers(df, customer)
         with col2:
             plot_chillers_kpi(df, customer)
