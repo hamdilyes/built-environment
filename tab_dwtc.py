@@ -4,12 +4,11 @@ import numpy as np
 from aux_delta_t import plot_delta_t
 from aux_over_pumping import plot_overpumping
 from aux_short_cycling import plot_short_cycling
-from aux_hvac import plot_live, plot_chillers_kpi
-from aux_cop import plot_cop
-from aux_chillers import plot_chillers
+from aux_dwtc import plot_live
+from aux_load import plot_load
 
 
-def tab_hvac(df, customer='freimtech'):
+def tab_dwtc(df, customer='dwtc'):
     # Initial view
     if not st.session_state.get("root_causes_"+customer, False) and \
        not st.session_state.get("over_pumping_"+customer, False) and \
@@ -23,15 +22,8 @@ def tab_hvac(df, customer='freimtech'):
             with st.expander("∆T", expanded=False):
                 plot_delta_t(df, customer)
         with col2:
-            with st.expander("COP", expanded=False):
-                plot_cop(df, customer)
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            with st.expander("MONTH-TO-DATE CHILLER ANALYSIS", expanded=False):
-                plot_chillers(df, customer)
-        with col2:
-            plot_chillers_kpi(df, customer)
+            with st.expander("COOLING LOAD", expanded=False):
+                plot_load(df, customer)
 
     # Hidden tab for Root Causes
     if st.session_state.get("root_causes_"+customer, False):
@@ -55,7 +47,7 @@ def tab_hvac(df, customer='freimtech'):
 def tab_root_causes(customer):
     # Hide button
     if st.button("🔙", key="hide_root_causes_"+customer):
-        st.session_state["root_causes_"+customer] = False
+        st.session_state.root_causes = False
         st.rerun()
 
     st.markdown("### Low ∆T Root Cause Diagnostics")
@@ -150,7 +142,7 @@ def tab_root_causes(customer):
         form_key = interactive_causes[cause]["key"]
         on_submit = interactive_causes[cause]["on_submit"]
 
-        with cols[i].form(key=form_key):
+        with cols[i].form(key=form_key+'_'+customer):
             submitted = st.form_submit_button(
                 label=cause,
                 use_container_width=True
@@ -175,16 +167,16 @@ def tab_over_pumping(df, customer):
     # --- Top Buttons ---
     col1, col2 = st.columns([1,25])
     with col1:
-        if st.button("🔙", key="hide_over_pumping"):
-            st.session_state['over_pumping_'+customer] = False
-            st.session_state["root_causes_"+customer] = False
+        if st.button("🔙", key="hide_over_pumping_"+customer):
+            st.session_state.over_pumping = False
+            st.session_state.root_causes = True
             st.rerun()
 
     with col2:
         if "show_over_pumping_info" not in st.session_state:
             st.session_state.show_over_pumping_info = False
 
-        if st.button("ⓘ", key="show_info_btn"):
+        if st.button("ⓘ", key="show_info_btn_"+customer):
             st.session_state.show_over_pumping_info = not st.session_state.show_over_pumping_info
 
     # --- Information Section ---
@@ -206,16 +198,18 @@ def tab_over_pumping(df, customer):
             - Higher pumping energy consumption with diminished returns
 
             """)
-            st.button("🔙", key="hide_info_btn", on_click=lambda: st.session_state.update({"show_over_pumping_info": False}))
+            st.button("🔙", key="hide_info_btn_"+customer, on_click=lambda: st.session_state.update({"show_over_pumping_info": False}))
 
     plot_overpumping(df, customer)
 
 
 def tab_short_cycling(df, customer):
-    hide_btn = st.button("🔙 ", key="hide_short_cycling")
+    hide_btn = st.button("🔙 ", key="hide_short_cycling_"+customer)
     if hide_btn:
-        st.session_state['short_cycling_'+customer] = False
-        st.session_state["root_causes_"+customer] = False
+        st.session_state.short_cycling = False
+        st.session_state.root_causes = True
         st.rerun()
+
+    st.markdown("The set-point often isn’t met, and the chiller’s frequent cycling makes the system inefficient.")
 
     plot_short_cycling(df, customer)

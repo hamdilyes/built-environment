@@ -6,19 +6,19 @@ from aux_delta_t_forecast import get_forecasted_cumulative_delta_t
 from aux_hvac_1 import get_cop
 
 
-def plot_cop(df):
+def plot_cop(df, customer):
     # Check
-    delta_t_df = get_cop(df)
+    delta_t_df = get_cop(df, customer)
     if delta_t_df is None or delta_t_df.empty:
-        st.warning("NO DATA.")
+        st.warning("NO DATA")
         return
 
-    delta_t_overview(df)
-    plot_forecasted_cumulative_delta_t(df, 7)
+    cop_overview(df, customer)
+    plot_forecasted_cumulative_cop(df, None, customer)
 
 
-def delta_t_overview(df: pd.DataFrame):
-    delta_t_df = get_cop(df)[['COP* plant']]
+def cop_overview(df: pd.DataFrame, customer):
+    delta_t_df = get_cop(df, customer)[['COP* plant']]
 
     # Get the latest available timestamp and sum values if multiple columns
     latest_ts = delta_t_df.index.max()
@@ -55,19 +55,19 @@ def delta_t_overview(df: pd.DataFrame):
     col1, col2, col4 = st.columns(3)
 
     if prev_month_avg is not None:
-        col1.metric(label="Previous Month COP", value=f"{prev_month_avg:.2f}")
+        col1.metric(label="Previous Month", value=f"{prev_month_avg:.2f}")
 
     if current_month_avg is not None:
         pct = (current_month_avg/prev_month_avg - 1)*100
-        col2.metric("Month-to-Date COP", f"{current_month_avg:.2f}", f"{pct:.1f}%")
+        col2.metric("Month-to-Date", f"{current_month_avg:.2f}", f"{pct:.1f}%")
     
     if forecasted_avg is not None:
         pct = (forecasted_avg/prev_month_avg - 1)*100
-        col4.metric("Forecasted COP", f"{forecasted_avg:.2f}", f"{pct:.1f}%")
+        col4.metric("Forecasted", f"{forecasted_avg:.2f}", f"{pct:.1f}%")
 
 
-def plot_forecasted_cumulative_delta_t(df, threshold):
-    delta_t_df = get_cop(df)[['COP* plant']]
+def plot_forecasted_cumulative_cop(df, threshold, customer):
+    delta_t_df = get_cop(df, customer)[['COP* plant']]
     # get forecasted data
     cumulative_actual, cumulative_forecast, combined_series, forecast_index = get_forecasted_cumulative_delta_t(delta_t_df)
     
@@ -143,13 +143,13 @@ def plot_forecasted_cumulative_delta_t(df, threshold):
         ))
 
     fig.update_layout(
-        title="Month-to-Date Daily Average ∆T",
+        title="Month-to-Date Cumulative Average",
         xaxis_title="Date",
-        yaxis_title="∆T (°C)",
+        yaxis_title="COP",
         hovermode="x unified",
         template="plotly_white",
         showlegend=False,
     )
     fig.update_yaxes(showgrid=False)
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, key='cop_'+customer)

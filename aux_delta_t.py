@@ -3,22 +3,21 @@ import streamlit as st
 import plotly.graph_objects as go
 
 from aux_delta_t_forecast import get_forecasted_cumulative_delta_t
-from aux_hvac_get import get_delta_t
+from aux_hvac_1 import get_delta_t
 
 
-def plot_delta_t(df):
-    # Check
-    delta_t_df = get_delta_t(df)
-    if delta_t_df.empty:
+def plot_delta_t(df, customer):
+    delta_t_df = get_delta_t(df, customer)
+    if delta_t_df is None or delta_t_df.empty:
         st.warning("NO DATA.")
         return
 
-    delta_t_overview(df)
-    plot_forecasted_cumulative_delta_t(df, 1)
+    delta_t_overview(df, customer)
+    plot_forecasted_cumulative_delta_t(df, None, customer)
 
 
-def delta_t_overview(df: pd.DataFrame):
-    delta_t_df = get_delta_t(df)
+def delta_t_overview(df: pd.DataFrame, customer):
+    delta_t_df = get_delta_t(df, customer)
 
     # Get the latest available timestamp and sum values if multiple columns
     latest_ts = delta_t_df.index.max()
@@ -55,24 +54,24 @@ def delta_t_overview(df: pd.DataFrame):
     col1, col2, col4, col5 = st.columns(4)
 
     if prev_month_avg is not None:
-        col1.metric(label="Previous Month ∆T", value=f"{prev_month_avg:.2f} °C")
+        col1.metric(label="Previous Month", value=f"{prev_month_avg:.2f} °C")
 
     if current_month_avg is not None:
         pct = (current_month_avg/prev_month_avg - 1)*100
-        col2.metric("Month-to-Date ∆T", f"{current_month_avg:.2f} °C", f"{pct:.1f}%")
+        col2.metric("Month-to-Date", f"{current_month_avg:.2f} °C", f"{pct:.1f}%")
     
     if forecasted_avg is not None:
         pct = (forecasted_avg/prev_month_avg - 1)*100
-        col4.metric("Forecasted ∆T", f"{forecasted_avg:.2f} °C", f"{pct:.1f}%")
+        col4.metric("Forecasted", f"{forecasted_avg:.2f} °C", f"{pct:.1f}%")
 
-    explore_btn = col5.button("Low ∆T Root Causes", key="button_root_causes")
+    explore_btn = col5.button("⚠️ ALERT - ∆T < 8°C (Month-to-Date)", key="button_root_causes_"+customer)
     if explore_btn:
-        st.session_state.root_causes = True
+        st.session_state['root_causes_'+customer] = False
         st.rerun()
 
 
-def plot_forecasted_cumulative_delta_t(df, threshold):
-    delta_t_df = get_delta_t(df) 
+def plot_forecasted_cumulative_delta_t(df, threshold, customer):
+    delta_t_df = get_delta_t(df, customer) 
     # get forecasted data
     cumulative_actual, cumulative_forecast, combined_series, forecast_index = get_forecasted_cumulative_delta_t(delta_t_df)
     
@@ -148,7 +147,7 @@ def plot_forecasted_cumulative_delta_t(df, threshold):
         ))
 
     fig.update_layout(
-        title="Month-to-Date Daily Average ∆T",
+        title="Month-to-Date Cumulative Average",
         xaxis_title="Date",
         yaxis_title="∆T (°C)",
         hovermode="x unified",
@@ -157,4 +156,4 @@ def plot_forecasted_cumulative_delta_t(df, threshold):
     )
     fig.update_yaxes(showgrid=False)
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, key='delta_t_'+customer)

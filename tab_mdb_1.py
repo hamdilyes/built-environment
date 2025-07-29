@@ -33,7 +33,7 @@ from aux_mdb_1 import (
 mdb_cols = [
         "MDB-01_ActEnergyDlvd_14648",
         "MDB-02_ActEnergyDlvd_14649",
-        "MDB-03_ActEnergyDlvd_14650"
+        "MDB-03_ActEnergyDlvd_14650",
     ]
 
 
@@ -41,7 +41,7 @@ def tab_mdb_1(df):
     # Filter to only those columns that exist in df
     available_mdb_cols = [col for col in mdb_cols if col in df.columns]
     if not available_mdb_cols:
-        st.warning("No MDB data.")
+        st.warning("NO DATA")
         return
     
     if not st.session_state.get("run_mdb", False):

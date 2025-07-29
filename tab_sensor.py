@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 
-from aux_sensor_diagnostics import diagnostic_tools_collection
+from aux_sensor import diagnostic_tools_collection
 
 
 def tab_sensor(df: pd.DataFrame):  
@@ -101,22 +101,17 @@ def tab_sensor(df: pd.DataFrame):
         failed_tests = total_tests - passed_tests
         
         # Display metrics in columns
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3, col4 = st.columns(4)
         with col1:
-            st.metric("Total Tests", total_tests)
+            st.metric("Tests", total_tests)
         with col2:
             st.metric("Passed", passed_tests)
         with col3:
             st.metric("Failed", failed_tests)
-        
-        # Overall health indicator
+        # Compute health score
         health_score = (passed_tests / total_tests) * 100 if total_tests > 0 else 0
-        if health_score >= 90:
-            st.success(f"✅ System Health: {health_score:.1f}% - Excellent")
-        elif health_score >= 70:
-            st.warning(f"⚠️ System Health: {health_score:.1f}% - Good")
-        else:
-            st.error(f"❌ System Health: {health_score:.1f}% - Poor")
+        with col4:
+            st.metric("Health Rate", f"{health_score:.0f}%")
     
     # Detailed diagnostics with expanders
     st.subheader("🔬 Detailed Diagnostics")
@@ -127,17 +122,8 @@ def tab_sensor(df: pd.DataFrame):
         success = result.get('success', False)
         status = "✅ PASS" if success else "❌ FAIL"
         
-        with st.expander(f"📏 Range Check - {status}"):
-            if success and result.get('data'):
-                st.write("**Out-of-range samples detected:**")
-                for col, metrics in result['data'].items():
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.metric(f"{col} - % Out of Range", f"{metrics['pct_out']*100:.2f}%")
-                    with col2:
-                        st.metric(f"{col} - Samples Out", metrics['n_out'])
-            else:
-                st.error(f"Error: {result.get('message', 'Unknown error')}")
+        with st.expander(f"Range Check - {status}"):
+            st.write("")
     
     # Gap Check
     if 'diagnostics_gap_check' in results:
@@ -145,16 +131,8 @@ def tab_sensor(df: pd.DataFrame):
         success = result.get('success', False)
         status = "✅ PASS" if success else "❌ FAIL"
         
-        with st.expander(f"📊 Gap Check - {status}"):
-            if success and result.get('data'):
-                data = result['data']
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.metric("Missing Data", f"{data['pct_missing']*100:.1f}%")
-                with col2:
-                    st.metric("Longest Gap", f"{data['longest_gap_min']} min")
-            else:
-                st.error(f"Error: {result.get('message', 'Unknown error')}")
+        with st.expander(f"Gap Check - {status}"):
+            st.write("")
     
     # Spike Detection
     if 'diagnostics_spike_detection' in results:
@@ -162,21 +140,8 @@ def tab_sensor(df: pd.DataFrame):
         success = result.get('success', False)
         status = "✅ PASS" if success else "❌ FAIL"
         
-        with st.expander(f"⚡ Spike Detection - {status}"):
-            if success and result.get('data'):
-                st.write("**Spikes detected (Z-score > 3.0):**")
-                for col, metrics in result['data'].items():
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.metric(f"{col} - Number of Spikes", metrics['n_spikes'])
-                    with col2:
-                        last_spike = metrics['last_spike']
-                        if last_spike and last_spike != 'None':
-                            st.metric(f"{col} - Last Spike", last_spike[:19])
-                        else:
-                            st.metric(f"{col} - Last Spike", "None")
-            else:
-                st.error(f"Error: {result.get('message', 'Unknown error')}")
+        with st.expander(f"Spike Detection - {status}"):
+            st.write("")
     
     # Flatline Detection
     if 'diagnostics_flatline_detection' in results:
@@ -184,17 +149,8 @@ def tab_sensor(df: pd.DataFrame):
         success = result.get('success', False)
         status = "✅ PASS" if success else "❌ FAIL"
         
-        with st.expander(f"📈 Flatline Detection - {status}"):
-            if success and result.get('data'):
-                st.write("**Flatline periods detected:**")
-                for col, metrics in result['data'].items():
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.metric(f"{col} - Flat Sections", metrics['n_flat_sections'])
-                    with col2:
-                        st.metric(f"{col} - Longest Flat", f"{metrics['longest_flat_min']} min")
-            else:
-                st.error(f"Error: {result.get('message', 'Unknown error')}")
+        with st.expander(f"Flatline Detection - {status}"):
+            st.write("")
     
     # Sensor Drift
     if 'diagnostics_sensor_drift' in results:
@@ -202,30 +158,8 @@ def tab_sensor(df: pd.DataFrame):
         success = result.get('success', False)
         status = "✅ PASS" if success else "❌ FAIL"
         
-        with st.expander(f"📉 Sensor Drift - {status}"):
-            if success and result.get('data'):
-                st.write("**Sensor drift analysis (slope per day):**")
-                for col, metrics in result['data'].items():
-                    if 'slope_per_day' in metrics:
-                        slope = metrics['slope_per_day']
-                        # Color code based on drift severity
-                        if abs(slope) > 0.5:
-                            delta_color = "inverse"
-                        elif abs(slope) > 0.1:
-                            delta_color = "normal"
-                        else:
-                            delta_color = "off"
-                        
-                        st.metric(
-                            f"{col} - Drift Rate",
-                            f"{slope:.4f} °C/day",
-                            delta=f"{slope:.4f}",
-                            delta_color=delta_color
-                        )
-                    else:
-                        st.error(f"{col}: {metrics.get('error', 'Unknown error')}")
-            else:
-                st.error(f"Error: {result.get('message', 'Unknown error')}")
+        with st.expander(f"Sensor Drift - {status}"):
+            st.write("")
     
     # Calibration Check
     if 'diagnostics_calibration_check' in results:
@@ -233,26 +167,5 @@ def tab_sensor(df: pd.DataFrame):
         success = result.get('success', False)
         status = "✅ PASS" if success else "❌ FAIL"
         
-        with st.expander(f"🎯 Calibration Check - {status}"):
-            if success and result.get('data'):
-                st.write("**Setpoint vs Sensor comparison:**")
-                for comparison, offset in result['data'].items():
-                    if offset is not None:
-                        # Color code based on offset magnitude
-                        if abs(offset) > 2.0:
-                            delta_color = "inverse"
-                        elif abs(offset) > 1.0:
-                            delta_color = "normal"
-                        else:
-                            delta_color = "off"
-                        
-                        st.metric(
-                            comparison,
-                            f"{offset:.2f} °C",
-                            delta=f"{offset:.2f}",
-                            delta_color=delta_color
-                        )
-                    else:
-                        st.error(f"{comparison}: Missing data")
-            else:
-                st.error(f"Error: {result.get('message', 'Unknown error')}")
+        with st.expander(f"Calibration Check - {status}"):
+            st.write("")
