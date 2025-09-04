@@ -16,7 +16,7 @@ from pathlib import Path
 TIMESTAMP_PATTERNS = [
     'timestamp', 'time', 'datetime', 'date_time', 'dt', 'date',
     'created_at', 'updated_at', 'time_stamp', 'timeStamp',
-    'Date', 'Time', 'DateTime', 'Timestamp', 'DATE', 'TIME'
+    'Date', 'Time', 'DateTime', 'Timestamp', 'DATE', 'TIME', 'Time Stamp'
 ]
 
 # Common timestamp formats to try
@@ -178,23 +178,45 @@ def check_granularity_consistency(dfs: List[pd.DataFrame], filenames: List[str])
         return False
     return True
 
+# def combine_dataframes(dfs: List[pd.DataFrame]) -> pd.DataFrame:
+#     if not dfs:
+#         return pd.DataFrame()
+#     if len(dfs) == 1:
+#         return dfs[0]
+#     try:
+#         combined_df = pd.concat(dfs, axis=0, sort=True)
+#         combined_df = combined_df.sort_index()
+#         if combined_df.index.duplicated().any():
+#             numerical_cols = combined_df.select_dtypes(include=[np.number]).columns
+#             non_numerical_cols = combined_df.select_dtypes(exclude=[np.number]).columns
+#             agg_dict = {col: 'mean' for col in numerical_cols}
+#             agg_dict.update({col: 'first' for col in non_numerical_cols})
+#             combined_df = combined_df.groupby(combined_df.index).agg(agg_dict)
+#         return combined_df
+#     except Exception as e:
+#         raise e
+
+from typing import List
+import pandas as pd
+import numpy as np
+
+
+def find_numerical_columns(df: pd.DataFrame) -> List[str]:
+    return df.select_dtypes(include=[np.number]).columns.tolist()
+
+
 def combine_dataframes(dfs: List[pd.DataFrame]) -> pd.DataFrame:
     if not dfs:
         return pd.DataFrame()
     if len(dfs) == 1:
         return dfs[0]
-    try:
-        combined_df = pd.concat(dfs, axis=0, sort=True)
-        combined_df = combined_df.sort_index()
-        if combined_df.index.duplicated().any():
-            numerical_cols = combined_df.select_dtypes(include=[np.number]).columns
-            non_numerical_cols = combined_df.select_dtypes(exclude=[np.number]).columns
-            agg_dict = {col: 'mean' for col in numerical_cols}
-            agg_dict.update({col: 'first' for col in non_numerical_cols})
-            combined_df = combined_df.groupby(combined_df.index).agg(agg_dict)
-        return combined_df
-    except Exception as e:
-        raise e
+    combined_df = pd.concat(dfs, axis=0, sort=True)
+    combined_df = combined_df.sort_index()
+    if combined_df.index.duplicated().any():
+        numeric_cols = find_numerical_columns(combined_df)
+        combined_df = combined_df[numeric_cols].groupby(combined_df.index).mean()
+    return combined_df
+
 
 def validate_combined_data(df: pd.DataFrame) -> bool:
     if df.empty:
@@ -204,6 +226,7 @@ def validate_combined_data(df: pd.DataFrame) -> bool:
     if len(df.select_dtypes(include=[np.number]).columns) == 0:
         return False
     return True
+
 
 def process_uploaded_csvs(uploaded_files, column_naming_method: str = 'suffix') -> pd.DataFrame:
     if not uploaded_files:

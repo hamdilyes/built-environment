@@ -41,10 +41,10 @@ def render_tabs(df, filtered_df=None):
     tab_functions = {
         "OVERVIEW": lambda: tab_overview(df),
         "CHARTS": lambda: tab_interactive(data_for_analysis),
-        "DATA QUALITY": lambda: tab_sensor(df),
-        "MDB": lambda: tab_mdb(df),
-        'FREIMTECH HVAC': lambda: tab_hvac(df),
-        'DWTC HVAC': lambda: tab_dwtc(df),
+        # "DATA QUALITY": lambda: tab_sensor(df),
+        # "MDB": lambda: tab_mdb(df),
+        # 'FREIMTECH HVAC': lambda: tab_hvac(df),
+        # 'DWTC HVAC': lambda: tab_dwtc(df),
     }
 
     tabs = st.tabs(tab_functions.keys())
